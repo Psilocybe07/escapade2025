@@ -68,11 +68,6 @@
       background-color: #4b0082;
     }
     #main-content {
-      display: flex;
-      flex-grow: 1;
-      overflow: hidden;
-    }
-    #artist-list {
       flex-grow: 1;
       overflow-y: auto;
       padding: 10px;
@@ -80,51 +75,57 @@
     }
     .artist-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      gap: 10px;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 15px;
       padding: 10px;
     }
     .artist-item {
-      padding: 12px;
+      padding: 20px 15px;
       cursor: pointer;
-      border-radius: 4px;
-      transition: background-color 0.3s;
+      border-radius: 6px;
+      transition: all 0.3s;
       background-color: #2a2a2a;
       text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 100px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     }
     .artist-item:hover {
       background-color: #3a3a3a;
+      transform: translateY(-3px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
     }
-    .artist-item.active {
+    .artist-name {
+      font-weight: bold;
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+    .genre-tag {
+      font-size: 12px;
+      padding: 3px 8px;
+      border-radius: 12px;
       background-color: #4b0082;
+      display: inline-block;
     }
-    #song-display {
-      width: 300px;
-      padding: 20px;
-      overflow-y: auto;
-      background-color: #1e1e1e;
-      border-left: 1px solid #333;
-    }
-    .song-item {
-      padding: 10px;
-      margin: 5px 0;
-      background-color: #2a2a2a;
-      border-radius: 4px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .copy-btn {
-      background-color: #4b0082;
+    .soundcloud-btn {
+      background-color: #ff7700;
       color: white;
       border: none;
-      padding: 5px 10px;
+      padding: 6px 12px;
       border-radius: 4px;
       cursor: pointer;
       transition: background-color 0.3s;
+      margin-top: 10px;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
     }
-    .copy-btn:hover {
-      background-color: #6a0dad;
+    .soundcloud-btn:hover {
+      background-color: #ff8800;
     }
     #canvas-container {
       position: absolute;
@@ -148,13 +149,12 @@
       border-radius: 4px;
       color: white;
     }
-    .genre-tag {
-      font-size: 12px;
-      padding: 2px 6px;
-      border-radius: 10px;
-      background-color: #4b0082;
-      margin-top: 5px;
-      display: inline-block;
+    .info-box {
+      background-color: rgba(75, 0, 130, 0.2);
+      border-left: 4px solid #4b0082;
+      padding: 10px 15px;
+      margin: 10px;
+      border-radius: 4px;
     }
   </style>
 </head>
@@ -175,15 +175,12 @@
           </div>
         </div>
       </div>
+      <div class="info-box">
+        Click on any artist to go to their SoundCloud page. Filter artists by genre or use the search box to find specific performers.
+      </div>
       <div id="main-content">
-        <div id="artist-list">
-          <div class="artist-grid">
-            <!-- Artists will be added here by JavaScript -->
-          </div>
-        </div>
-        <div id="song-display">
-          <h2>Select an artist to view their songs</h2>
-          <p>Click on any artist in the grid to display their songs. You can copy song names to search on SoundCloud.</p>
+        <div class="artist-grid">
+          <!-- Artists will be added here by JavaScript -->
         </div>
       </div>
     </div>
@@ -191,89 +188,88 @@
   <div id="canvas-container"></div>
 
   <script>
-    // Festival lineup data with genres and sample songs
+    // Festival lineup data with genres
     const festivalData = [
-      { name: "Above & Beyond", genre: "Trance", songs: ["Sun & Moon", "Thing Called Love", "Northern Soul", "Counting Down The Days", "Blue Sky Action"] },
-      { name: "Alex Sonata & Therio", genre: "Progressive House", songs: ["Cala Tarida", "Lighthouse", "Hear Me", "Reboot", "Faces"] },
-      { name: "Alkemy", genre: "House", songs: ["Techno Classics", "Make It Right", "Rumble", "Infinite", "Sunrise"] },
-      { name: "Alpha 9", genre: "Trance", songs: ["Stellar", "Skin", "Time Traveller", "Everywhere I Go", "All That I Can"] },
-      { name: "Amy Wiles", genre: "Tech House", songs: ["Wildfire", "Runaway", "Higher", "Divine", "Elevate"] },
-      { name: "Anthony Cole", genre: "House", songs: ["Live Your Life", "Dancing Spirit", "Harmony", "Dreamscape", "Sunshine"] },
-      { name: "ARMNHMR", genre: "Future Bass", songs: ["Falling Apart", "Save You Now", "The Universe Is Yours", "Leave It All", "Oceans"] },
-      { name: "Audien", genre: "Progressive House", songs: ["Waiting", "Something Better", "Leaving You", "Never Letting Go", "Hindsight"] },
-      { name: "Azzeca", genre: "Melodic Bass", songs: ["Higher", "Skyfalls", "Afterglow", "Eternal", "Sunrise"] },
-      { name: "Blossom", genre: "Bass House", songs: ["Black Hole", "DYTAM", "Anime", "Taking Me Back", "Boss"] },
-      { name: "Bou", genre: "Drum & Bass", songs: ["Veteran", "Poison", "Spacewalk", "Closer", "Adrenaline"] },
-      { name: "Capochino", genre: "House", songs: ["Deep Dreams", "Melancholy", "City Lights", "Remember", "Sunrise"] },
-      { name: "Chris Lake", genre: "Tech House", songs: ["Turn Off The Lights", "Operator", "I Want You", "Beat Freak", "Stay With Me"] },
-      { name: "Cyclops", genre: "Dubstep", songs: ["Dip", "Goose", "Alien Boy", "Jorts", "Slurp"] },
-      { name: "Daniel Allan", genre: "Electronic", songs: ["Glass House", "Fallout", "Drive", "Lighthouse", "Gorgeous"] },
-      { name: "Dave Summit", genre: "Tech House", songs: ["Euphoria", "Lost Signal", "Dreamland", "Sundown", "Midnight"] },
-      { name: "Deathpact", genre: "Midtempo", songs: ["Catalyst", "Formality", "Piston", "Shuffle", "Bloodline"] },
-      { name: "Dennett", genre: "Techno", songs: ["Pulse", "Ignite", "Darkness", "Awakening", "Journey"] },
-      { name: "Disciple", genre: "Dubstep", songs: ["Eliminate", "Riot", "Crank", "Mayhem", "Chaos"] },
-      { name: "Disclosure", genre: "House", songs: ["Latch", "White Noise", "You & Me", "Omen", "Magnets"] },
-      { name: "DJ LX", genre: "Open Format", songs: ["Summer Vibes", "Feel The Love", "Ignite", "Horizon", "Elevation"] },
-      { name: "DVBBS", genre: "EDM", songs: ["Tsunami", "Not Going Home", "Beautiful Disaster", "Angel", "Gold Skies"] },
-      { name: "Excision", genre: "Dubstep", songs: ["Destroid", "Rumble", "Vault", "Home", "Gold"] },
-      { name: "Filthy B2B Kracca", genre: "Drum & Bass", songs: ["Firestorm", "Ignite", "Meltdown", "Pulse", "Outbreak"] },
-      { name: "Gabriel & Dresden", genre: "Trance", songs: ["Tracking Treasure Down", "As The Rush Comes", "Dangerous Power", "Remember", "Arcadia"] },
-      { name: "Galantis", genre: "EDM", songs: ["Runaway", "Peanut Butter Jelly", "No Money", "Love On Me", "Smile"] },
-      { name: "Ghetto Birds", genre: "House", songs: ["Funk Machine", "Underground", "Street Vibes", "Rhythm", "Downtown"] },
-      { name: "Gorgon City", genre: "House", songs: ["Ready For Your Love", "Imagination", "Go All Night", "All Four Walls", "Saviour"] },
-      { name: "Green Velvet", genre: "Tech House", songs: ["La La Land", "Flash", "Deceiver", "Bigger Than Prince", "Voicemail"] },
-      { name: "Gryffin", genre: "Future Bass", songs: ["Feel Good", "Heading Home", "Tie Me Down", "Body Back", "All You Need To Know"] },
-      { name: "Hamro", genre: "Techno", songs: ["Pulse", "Synthesis", "Euphoria", "Odyssey", "Quantum"] },
-      { name: "Hedex", genre: "Drum & Bass", songs: ["Pulse", "Ignite", "Darkness", "Elevation", "Harmony"] },
-      { name: "Heu", genre: "Deep House", songs: ["Gravity", "Sunrise", "Floating", "Horizons", "Twilight"] },
-      { name: "HNTR", genre: "Techno", songs: ["Shadows", "Nightfall", "Apex", "Gravity", "Pulse"] },
-      { name: "Hypaton", genre: "Hardstyle", songs: ["Pulse", "Ignite", "Darkness", "Elevation", "Harmony"] },
-      { name: "INFEKT", genre: "Dubstep", songs: ["Raptor", "Fearless", "Orgalorg", "Activate", "Bulletproof"] },
-      { name: "J Ribbon", genre: "House", songs: ["Elevation", "Sunshine", "Groove", "Soulful", "Movement"] },
-      { name: "Jason Ross", genre: "Trance", songs: ["Chains", "Through It All", "Valor", "IOU", "East of Eden"] },
-      { name: "Jessica Audiffred", genre: "Bass", songs: ["Ride", "Higher", "The Underground", "Emergency", "Faded"] },
-      { name: "Kasablanca", genre: "Melodic Techno", songs: ["Alive", "Synthetic", "Cronus", "Immunity", "Lane 8"] },
-      { name: "Kaskade", genre: "House", songs: ["Atmosphere", "Fire & Ice", "Angel On My Shoulder", "Disarm You", "Never Sleep Alone"] },
-      { name: "Khabs", genre: "Techno", songs: ["Pulse", "Ignite", "Darkness", "Elevation", "Harmony"] },
-      { name: "Kygo", genre: "Tropical House", songs: ["Firestone", "Stole The Show", "It Ain't Me", "Stargazing", "Higher Love"] },
-      { name: "Laura Scavo", genre: "Melodic House", songs: ["Dreamscape", "Serenity", "Awakening", "Reflection", "Harmony"] },
-      { name: "Layz", genre: "Dubstep", songs: ["Ignite", "Darkness", "Rumble", "Collapse", "Dystopia"] },
-      { name: "Level Up", genre: "Dubstep", songs: ["Cobra", "Redlight", "Scary Monsters", "Inhuman", "Cthulhu"] },
-      { name: "Linska", genre: "Techno", songs: ["Pulse", "Ignite", "Darkness", "Elevation", "Harmony"] },
-      { name: "Liquid Stranger", genre: "Experimental Bass", songs: ["Hotbox", "Dissolve", "Gunslinger", "Jungle Juice", "Sounds of Wakaan"] },
-      { name: "Loco Dice", genre: "Techno", songs: ["Get Comfy", "Detox", "El Gallo Negro", "Pimp Jackson", "Seeing Through Shadows"] },
-      { name: "Lost Frequencies", genre: "Tropical House", songs: ["Are You With Me", "Reality", "Like I Love You", "Melody", "Chemical"] },
-      { name: "Matroda", genre: "Bass House", songs: ["Forget It", "True Value", "Temperature", "Back To The Beat", "Gimme Some Keys"] },
-      { name: "Mholy", genre: "House", songs: ["Pulse", "Ignite", "Darkness", "Elevation", "Harmony"] },
-      { name: "Mike P", genre: "Tech House", songs: ["Rhythm", "Pulse", "Groove", "Movement", "Techno"] },
-      { name: "Morten", genre: "Future Rave", songs: ["Titanium", "Make It To Heaven", "Dreams", "Impossible", "No Good"] },
-      { name: "Nikita, The Wicked", genre: "Techno", songs: ["Pulse", "Ignite", "Darkness", "Elevation", "Harmony"] },
-      { name: "Notion", genre: "Drum & Bass", songs: ["Hooked", "Lambo", "Broken", "Messenger", "Caught My Eye"] },
-      { name: "Nourey", genre: "Melodic Techno", songs: ["Rhythm", "Pulse", "Groove", "Movement", "Flow"] },
-      { name: "Oliver Smith", genre: "Trance", songs: ["Endorphin", "Inside", "Triangles", "Over You", "Zero"] },
-      { name: "Paper Skies", genre: "Future Bass", songs: ["Celestial", "Gravity", "Starfall", "Atmosphere", "Dreamscape"] },
-      { name: "Patrick Topping", genre: "Tech House", songs: ["Forget", "Be Sharp Say Nowt", "Rocket", "Voicemail", "Turbo Time"] },
-      { name: "Pineo & Loeb", genre: "Electronic", songs: ["Good Vibes Ahead", "Livin' It Up", "Dreaming Of", "Elevate", "Sunshine"] },
-      { name: "Remy", genre: "Tech House", songs: ["Rhythm", "Pulse", "Groove", "Movement", "Flow"] },
-      { name: "RL Grime", genre: "Trap", songs: ["Core", "Tell Me", "Pressure", "Era", "Scylla"] },
-      { name: "Rose Motion", genre: "Melodic House", songs: ["Rhythm", "Pulse", "Groove", "Movement", "Flow"] },
-      { name: "Sheva", genre: "Progressive House", songs: ["Pulse", "Ignite", "Darkness", "Elevation", "Harmony"] },
-      { name: "Sota", genre: "House", songs: ["Pulse", "Ignite", "Darkness", "Elevation", "Harmony"] },
-      { name: "STVSH", genre: "Bass House", songs: ["Rhythm", "Pulse", "Groove", "Movement", "Flow"] },
-      { name: "Subtronics", genre: "Dubstep", songs: ["Scream Saver", "Griztronics", "Bounce", "Cyclops Army", "Blastin"] },
-      { name: "Sweet Morgane", genre: "Melodic House", songs: ["Rhythm", "Pulse", "Groove", "Movement", "Flow"] },
-      { name: "The Chainsmokers", genre: "EDM", songs: ["Closer", "Don't Let Me Down", "Paris", "Something Just Like This", "Roses"] },
-      { name: "The Outlaw", genre: "Techno", songs: ["Pulse", "Ignite", "Darkness", "Elevation", "Harmony"] },
-      { name: "Tyr One", genre: "Trance", songs: ["Pulse", "Ignite", "Darkness", "Elevation", "Harmony"] },
-      { name: "Vastive B2B Benda", genre: "Drum & Bass", songs: ["Rhythm", "Pulse", "Groove", "Movement", "Flow"] },
-      { name: "Vintage Culture", genre: "House", songs: ["In The Dark", "It Is What It Is", "Drinkee", "Cali Dreams", "Save Me"] },
-      { name: "WAB B2B Kenzoh", genre: "Drum & Bass", songs: ["Rhythm", "Pulse", "Groove", "Movement", "Flow"] },
-      { name: "Wooli", genre: "Dubstep", songs: ["Island", "Falling", "Over Now", "Oxygen", "Another Day"] },
-      { name: "Xandra", genre: "Melodic Bass", songs: ["Rhythm", "Pulse", "Groove", "Movement", "Flow"] },
-      { name: "YDG", genre: "Trap", songs: ["Rhythm", "Pulse", "Groove", "Movement", "Flow"] }
+      { name: "Above & Beyond", genre: "Trance" },
+      { name: "Alex Sonata & Therio", genre: "Progressive House" },
+      { name: "Alkemy", genre: "House" },
+      { name: "Alpha 9", genre: "Trance" },
+      { name: "Amy Wiles", genre: "Tech House" },
+      { name: "Anthony Cole", genre: "House" },
+      { name: "ARMNHMR", genre: "Future Bass" },
+      { name: "Audien", genre: "Progressive House" },
+      { name: "Azzeca", genre: "Melodic Bass" },
+      { name: "Blossom", genre: "Bass House" },
+      { name: "Bou", genre: "Drum & Bass" },
+      { name: "Capochino", genre: "House" },
+      { name: "Chris Lake", genre: "Tech House" },
+      { name: "Cyclops", genre: "Dubstep" },
+      { name: "Daniel Allan", genre: "Electronic" },
+      { name: "Dave Summit", genre: "Tech House" },
+      { name: "Deathpact", genre: "Midtempo" },
+      { name: "Dennett", genre: "Techno" },
+      { name: "Disciple", genre: "Dubstep" },
+      { name: "Disclosure", genre: "House" },
+      { name: "DJ LX", genre: "Open Format" },
+      { name: "DVBBS", genre: "EDM" },
+      { name: "Excision", genre: "Dubstep" },
+      { name: "Filthy B2B Kracca", genre: "Drum & Bass" },
+      { name: "Gabriel & Dresden", genre: "Trance" },
+      { name: "Galantis", genre: "EDM" },
+      { name: "Ghetto Birds", genre: "House" },
+      { name: "Gorgon City", genre: "House" },
+      { name: "Green Velvet", genre: "Tech House" },
+      { name: "Gryffin", genre: "Future Bass" },
+      { name: "Hamro", genre: "Techno" },
+      { name: "Hedex", genre: "Drum & Bass" },
+      { name: "Heu", genre: "Deep House" },
+      { name: "HNTR", genre: "Techno" },
+      { name: "Hypaton", genre: "Hardstyle" },
+      { name: "INFEKT", genre: "Dubstep" },
+      { name: "J Ribbon", genre: "House" },
+      { name: "Jason Ross", genre: "Trance" },
+      { name: "Jessica Audiffred", genre: "Bass" },
+      { name: "Kasablanca", genre: "Melodic Techno" },
+      { name: "Kaskade", genre: "House" },
+      { name: "Khabs", genre: "Techno" },
+      { name: "Kygo", genre: "Tropical House" },
+      { name: "Laura Scavo", genre: "Melodic House" },
+      { name: "Layz", genre: "Dubstep" },
+      { name: "Level Up", genre: "Dubstep" },
+      { name: "Linska", genre: "Techno" },
+      { name: "Liquid Stranger", genre: "Experimental Bass" },
+      { name: "Loco Dice", genre: "Techno" },
+      { name: "Lost Frequencies", genre: "Tropical House" },
+      { name: "Matroda", genre: "Bass House" },
+      { name: "Mholy", genre: "House" },
+      { name: "Mike P", genre: "Tech House" },
+      { name: "Morten", genre: "Future Rave" },
+      { name: "Nikita, The Wicked", genre: "Techno" },
+      { name: "Notion", genre: "Drum & Bass" },
+      { name: "Nourey", genre: "Melodic Techno" },
+      { name: "Oliver Smith", genre: "Trance" },
+      { name: "Paper Skies", genre: "Future Bass" },
+      { name: "Patrick Topping", genre: "Tech House" },
+      { name: "Pineo & Loeb", genre: "Electronic" },
+      { name: "Remy", genre: "Tech House" },
+      { name: "RL Grime", genre: "Trap" },
+      { name: "Rose Motion", genre: "Melodic House" },
+      { name: "Sheva", genre: "Progressive House" },
+      { name: "Sota", genre: "House" },
+      { name: "STVSH", genre: "Bass House" },
+      { name: "Subtronics", genre: "Dubstep" },
+      { name: "Sweet Morgane", genre: "Melodic House" },
+      { name: "The Chainsmokers", genre: "EDM" },
+      { name: "The Outlaw", genre: "Techno" },
+      { name: "Tyr One", genre: "Trance" },
+      { name: "Vastive B2B Benda", genre: "Drum & Bass" },
+      { name: "Vintage Culture", genre: "House" },
+      { name: "WAB B2B Kenzoh", genre: "Drum & Bass" },
+      { name: "Wooli", genre: "Dubstep" },
+      { name: "Xandra", genre: "Melodic Bass" },
+      { name: "YDG", genre: "Trap" }
     ];
 
-    let activeArtist = null;
     let particles = [];
     let selectedGenre = "All";
 
@@ -331,6 +327,7 @@
         artistItem.className = 'artist-item';
         
         const artistName = document.createElement('div');
+        artistName.className = 'artist-name';
         artistName.textContent = artist.name;
         artistItem.appendChild(artistName);
         
@@ -339,12 +336,16 @@
         genreTag.textContent = artist.genre;
         artistItem.appendChild(genreTag);
         
-        artistItem.addEventListener('click', () => {
-          document.querySelectorAll('.artist-item').forEach(item => item.classList.remove('active'));
-          artistItem.classList.add('active');
-          displaySongs(artist);
-          activeArtist = artist;
+        const soundcloudBtn = document.createElement('button');
+        soundcloudBtn.className = 'soundcloud-btn';
+        soundcloudBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M19.8 12c-.4 0-.8.3-.8.8v6.5h-2.5V8.8c0-.4-.2-.8-.5-.8-.5 0-.7.4-.7.8v10.5h-2.5V8.8c0-.4-.3-.8-.7-.8-.4 0-.8.4-.8.8v10.5H9.1V9.1c0-.4-.3-.8-.8-.8-.4 0-.8.4-.8.8v9.8H5V11c0-.4-.3-.7-.7-.7-.4 0-.8.3-.8.7v7.8c0 .5.4.9.9.9h11.4c.5 0 .9-.4.9-.9v-6c0-.5-.4-.8-.9-.8z"/><path d="M2.2 15.1c-.5 0-.9-.4-.9-.9s.4-.9.9-.9.9.4.9.9-.4.9-.9.9z"/></svg> Listen on SoundCloud';
+        soundcloudBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          // Format the artist name for SoundCloud URL
+          const formattedName = artist.name.replace(/\s+/g, '-').toLowerCase();
+          window.open(`https://soundcloud.com/search?q=${encodeURIComponent(artist.name)}`, '_blank');
         });
+        artistItem.appendChild(soundcloudBtn);
         
         artistGrid.appendChild(artistItem);
       });
@@ -363,52 +364,6 @@
         });
         
         renderArtistGrid(filteredArtists);
-      });
-    }
-
-    function displaySongs(artist) {
-      const songDisplay = document.getElementById('song-display');
-      songDisplay.innerHTML = '';
-      
-      const artistHeading = document.createElement('h2');
-      artistHeading.textContent = artist.name;
-      songDisplay.appendChild(artistHeading);
-      
-      const genreInfo = document.createElement('p');
-      genreInfo.innerHTML = `<strong>Genre:</strong> ${artist.genre}`;
-      songDisplay.appendChild(genreInfo);
-      
-      const songIntro = document.createElement('p');
-      songIntro.textContent = 'Click the copy button next to a song to copy it for SoundCloud search.';
-      songDisplay.appendChild(songIntro);
-
-      artist.songs.forEach(song => {
-        const songItem = document.createElement('div');
-        songItem.className = 'song-item';
-        
-        const songName = document.createElement('span');
-        songName.textContent = song;
-        
-        const copyBtn = document.createElement('button');
-        copyBtn.className = 'copy-btn';
-        copyBtn.textContent = 'Copy';
-        copyBtn.addEventListener('click', () => {
-          const searchText = `${artist.name} ${song}`;
-          navigator.clipboard.writeText(searchText)
-            .then(() => {
-              copyBtn.textContent = 'Copied!';
-              setTimeout(() => {
-                copyBtn.textContent = 'Copy';
-              }, 2000);
-            })
-            .catch(err => {
-              console.error('Failed to copy text: ', err);
-            });
-        });
-        
-        songItem.appendChild(songName);
-        songItem.appendChild(copyBtn);
-        songDisplay.appendChild(songItem);
       });
     }
 
@@ -446,28 +401,6 @@
           // Bounce off edges
           if (particle.x < 0 || particle.x > p.width) particle.speedX *= -1;
           if (particle.y < 0 || particle.y > p.height) particle.speedY *= -1;
-        }
-        
-        // Draw music visualization if artist is active
-        if (activeArtist) {
-          const centerX = p.width / 2;
-          const centerY = p.height / 2;
-          const maxRadius = p.min(p.width, p.height) * 0.3;
-          
-          p.stroke(255, 100);
-          p.noFill();
-          
-          // Draw animated circular waveform
-          p.beginShape();
-          for (let i = 0; i < 360; i++) {
-            const angle = p.radians(i);
-            const noiseVal = p.noise(i * 0.05, p.frameCount * 0.01) * 50;
-            const radius = maxRadius + noiseVal;
-            const x = centerX + p.cos(angle) * radius;
-            const y = centerY + p.sin(angle) * radius;
-            p.vertex(x, y);
-          }
-          p.endShape(p.CLOSE);
         }
       };
 
